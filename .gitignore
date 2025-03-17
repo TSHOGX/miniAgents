@@ -1,0 +1,12 @@
+__backups__
+__learn__
+__pycache__
+
+.DS_Store
+.env
+.venv
+.vscode
+
+logs
+config
+
