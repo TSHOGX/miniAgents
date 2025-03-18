@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
-
+from typing import Optional
 from loguru import logger as _logger
 
 from app.config import PROJECT_ROOT
@@ -9,7 +9,9 @@ from app.config import PROJECT_ROOT
 _print_level = "INFO"
 
 
-def define_log_level(print_level="INFO", logfile_level="DEBUG", name: str = None):
+def define_log_level(
+    print_level: str = "INFO", logfile_level: str = "DEBUG", name: Optional[str] = None
+):
     """Adjust the log level to above level"""
     global _print_level
     _print_level = print_level

@@ -4,15 +4,6 @@ from typing import Any, List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 
-class AgentState(str, Enum):
-    """Agent execution states"""
-
-    IDLE = "IDLE"
-    RUNNING = "RUNNING"
-    FINISHED = "FINISHED"
-    ERROR = "ERROR"
-
-
 class Function(BaseModel):
     name: str
     arguments: str
@@ -38,7 +29,7 @@ class Message(BaseModel):
     def __add__(self, other) -> List["Message"]:
         """支持 Message + list 或 Message + Message 的操作"""
         if isinstance(other, list):
-            return [self] + other
+            return [self] + other  # type: ignore
         elif isinstance(other, Message):
             return [self, other]
         else:
@@ -61,7 +52,7 @@ class Message(BaseModel):
         if self.content is not None:
             message["content"] = self.content
         if self.tool_calls is not None:
-            message["tool_calls"] = [tool_call.dict() for tool_call in self.tool_calls]
+            message["tool_calls"] = [tool_call.dict() for tool_call in self.tool_calls]  # type: ignore
         if self.name is not None:
             message["name"] = self.name
         if self.tool_call_id is not None:
@@ -103,7 +94,7 @@ class Message(BaseModel):
             for call in tool_calls
         ]
         return cls(
-            role="assistant", content=content, tool_calls=formatted_calls, **kwargs
+            role="assistant", content=content, tool_calls=formatted_calls, **kwargs  # type: ignore
         )
 
 
@@ -130,6 +121,6 @@ class Memory(BaseModel):
         """Get n most recent messages"""
         return self.messages[-n:]
 
-    def to_dict_list(self) -> List[dict]:
+    def to_dict_list(self) -> List[Union[dict, Message]]:
         """Convert messages to list of dicts"""
         return [msg.to_dict() for msg in self.messages]

@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 
 from app.llm import LLM
-from app.schema import AgentState, Memory, Message
+from app.schema import Memory, Message
 
 
 class BaseAgent(BaseModel, ABC):
@@ -34,8 +34,64 @@ class BaseAgent(BaseModel, ABC):
     max_steps: int = Field(default=10, description="Maximum steps before termination")
     current_step: int = Field(default=0, description="Current step in execution")
 
-    @model_validator(mode="after")
-    def validate_prompts(self):
-        """Validate prompts and ensure they are provided if required."""
-        if self.system_prompt is None and self.next_step_prompt is None:
-            raise ValueError("Both system_prompt and next_step_prompt cannot be None")
+    duplicate_threshold: int = 2
+
+    class Config:
+        arbitrary_types_allowed = True
+        extra = "allow"  # Allow extra fields for flexibility in subclasses
+
+    @model_validator(mode="after")  # type: ignore
+    def initialize_agent(self) -> "BaseAgent":
+        """Initialize agent with default settings if not provided."""
+        if self.llm is None or not isinstance(self.llm, LLM):
+            self.llm = LLM(config_name=self.name.lower())
+        if not isinstance(self.memory, Memory):
+            self.memory = Memory()
+        return self
+
+    def run(self, request: Optional[str] = None) -> str:
+        """Execute the agent's main step.
+
+        Can be extended to include more complex logic, e.g. workflow loops.
+        """
+        # Add request to memory first
+        if request:
+            self.update_memory("user", request)
+
+        step_result = self.step()
+
+        return step_result
+
+    @abstractmethod
+    def step(self) -> str:
+        """Execute a single step in the agent's workflow.
+
+        Must be implemented by subclasses to define specific behavior.
+        """
+
+    def update_memory(
+        self,
+        role,
+        content: str,
+        **kwargs,
+    ) -> None:
+        """Add a message to the agent's memory."""
+        message_map = {
+            "user": Message.user,
+            "system": Message.system,
+            "assistant": Message.assistant,
+            "tool": lambda content, **kw: Message.tool(content, **kw),
+        }
+
+        if role not in message_map:
+            raise ValueError(f"Unsupported message role: {role}")
+
+        # Create message with appropriate parameters
+        if role == "tool":
+            self.memory.add_message(message_map[role](content, **kwargs))
+        else:
+            self.memory.add_message(
+                message_map[role](content, **kwargs)
+                if kwargs
+                else message_map[role](content)
+            )

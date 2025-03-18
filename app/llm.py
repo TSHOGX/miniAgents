@@ -2,7 +2,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from openai import (
     APIError,
-    AsyncOpenAI,
+    OpenAI,
     AuthenticationError,
     OpenAIError,
     RateLimitError,
@@ -35,12 +35,14 @@ class LLM:
             self.model = llm_config.model
             self.max_tokens = llm_config.max_tokens
             self.temperature = llm_config.temperature
-            self.client = AsyncOpenAI(
+            self.client = OpenAI(
                 api_key=llm_config.api_key, base_url=llm_config.base_url
             )
 
     @staticmethod
-    def format_messages(messages: List[Union[dict, Message]]) -> List[dict]:
+    def format_messages(
+        messages: List[Union[dict, Message]],
+    ) -> List[Union[dict, Message]]:
         """
         Format messages for LLM by converting them to OpenAI message format.
 
@@ -91,7 +93,7 @@ class LLM:
         wait=wait_random_exponential(min=1, max=60),
         stop=stop_after_attempt(6),
     )
-    async def ask(
+    def ask(
         self,
         messages: List[Union[dict, Message]],
         system_msgs: Optional[List[Union[dict, Message]]] = None,
@@ -125,9 +127,9 @@ class LLM:
 
             if not stream:
                 # Non-streaming request
-                response = await self.client.chat.completions.create(
+                response = self.client.chat.completions.create(
                     model=self.model,
-                    messages=messages,
+                    messages=messages,  # type: ignore
                     max_tokens=self.max_tokens,
                     temperature=temperature or self.temperature,
                     stream=False,
@@ -137,16 +139,16 @@ class LLM:
                 return response.choices[0].message.content
 
             # Streaming request
-            response = await self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
-                messages=messages,
+                messages=messages,  # type: ignore
                 max_tokens=self.max_tokens,
                 temperature=temperature or self.temperature,
                 stream=True,
             )
 
             collected_messages = []
-            async for chunk in response:
+            for chunk in response:
                 chunk_message = chunk.choices[0].delta.content or ""
                 collected_messages.append(chunk_message)
                 print(chunk_message, end="", flush=True)
@@ -171,7 +173,7 @@ class LLM:
         wait=wait_random_exponential(min=1, max=60),
         stop=stop_after_attempt(6),
     )
-    async def ask_tool(
+    def ask_tool(
         self,
         messages: List[Union[dict, Message]],
         system_msgs: Optional[List[Union[dict, Message]]] = None,
@@ -220,12 +222,12 @@ class LLM:
                         raise ValueError("Each tool must be a dict with 'type' field")
 
             # Set up the completion request
-            response = await self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
-                messages=messages,
+                messages=messages,  # type: ignore
                 temperature=temperature or self.temperature,
                 max_tokens=self.max_tokens,
-                tools=tools,
+                tools=tools,  # type: ignore
                 tool_choice=tool_choice,
                 timeout=timeout,
                 **kwargs,
