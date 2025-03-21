@@ -23,8 +23,17 @@ class LLMSettings(BaseModel):
     temperature: float = Field(1.0, description="Sampling temperature")
 
 
+class PGSettings(BaseModel):
+    host: str = Field(..., description="Database host")
+    port: int = Field(..., description="Database port")
+    user: str = Field(..., description="Database user")
+    password: str = Field(..., description="Database password")
+    database: str = Field(..., description="Database name")
+
+
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
+    pg: PGSettings
 
 
 class Config:
@@ -70,7 +79,7 @@ class Config:
             k: v for k, v in raw_config.get("llm", {}).items() if isinstance(v, dict)
         }
 
-        default_settings = {
+        default_llm_settings = {
             "model": base_llm.get("model"),
             "base_url": base_llm.get("base_url"),
             "api_key": base_llm.get("api_key"),
@@ -78,21 +87,28 @@ class Config:
             "temperature": base_llm.get("temperature", 1.0),
         }
 
+        pg_settings = raw_config.get("pg", {})
+
         config_dict = {
             "llm": {
-                "default": default_settings,
+                "default": default_llm_settings,
                 **{
-                    name: {**default_settings, **override_config}
+                    name: {**default_llm_settings, **override_config}
                     for name, override_config in llm_overrides.items()
                 },
-            }
+            },
+            "pg": pg_settings,
         }
 
-        self._config = AppConfig(**config_dict)
+        self._config = AppConfig(llm=config_dict["llm"], pg=config_dict["pg"])
 
     @property
     def llm(self) -> Dict[str, LLMSettings]:
         return self._config.llm
+
+    @property
+    def pg(self) -> PGSettings:
+        return self._config.pg
 
 
 config = Config()
