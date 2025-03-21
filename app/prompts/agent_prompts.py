@@ -111,3 +111,19 @@ Please provide:
 5. Keep your response concise and focused on the data
 
 Response:"""
+
+
+PROMPTS[
+    "FIX_SQL"
+] = """Based on the following error message, fix the SQL query.
+
+Error message: {error_message}
+
+SQL query:
+{sql_query}
+
+Requirements:
+1. Fix the SQL query to address the error
+2. Keep the SQL query valid
+3. Keep the SQL query concise
+"""

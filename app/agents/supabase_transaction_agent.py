@@ -85,9 +85,20 @@ income sources, transaction categories, and other financial insights."""
             )
             return "I failed to generate a SQL query for your question."
 
-        # Execute the SQL query against Supabase (simulated for now)
+        # Execute the SQL query against Supabase
         query_result = self._execute_query(sql_query)
-        print(f"=== query_result === {query_result}")
+        if query_result["status"] == "error":
+            # If the query result is an error, we need to try to fix it
+            fix_attempts = 0
+            while fix_attempts < self.max_fix_attempts:
+                sql_query = self._fix_sql_query(sql_query, query_result["message"])
+                query_result = self._execute_query(sql_query)
+                print(f"📝 {fix_attempts}: {query_result}")
+                if query_result["status"] == "success":
+                    break
+                fix_attempts += 1
+
+        print(f"📝 final: {query_result}")
 
         # Format the results into a user-friendly response
         response = self._format_response(user_query, sql_query, query_result)
@@ -95,6 +106,25 @@ income sources, transaction categories, and other financial insights."""
         # Store the response in memory
         self.update_memory("assistant", response)
         return response
+
+    def _fix_sql_query(self, sql_query: str, error_message: str) -> str:
+        """Fix the SQL query based on the error message."""
+        prompt = PROMPTS["FIX_SQL"].format(
+            sql_query=sql_query,
+            error_message=error_message,
+        )
+
+        messages: List[Union[dict, Message]] = [Message.user(prompt)]
+        response = self.llm.ask(messages=messages, stream=False, temperature=0.7)
+
+        # Extract SQL code from the response, removing any markdown formatting
+        sql_query = response.strip()
+        if sql_query.startswith("```sql"):
+            sql_query = sql_query.split("```sql")[1]
+        if "```" in sql_query:
+            sql_query = sql_query.split("```")[0]
+
+        return sql_query.strip()
 
     def _generate_sql_query(self, user_query: str) -> str:
         """Generate SQL query based on the user's question."""
@@ -129,7 +159,9 @@ income sources, transaction categories, and other financial insights."""
                     # Try to fetch results (for SELECT queries)
                     result = cursor.fetchall()
                     # Convert result to JSON-serializable format
-                    serialized_result = json.dumps(result, default=str)
+                    serialized_result = json.dumps(
+                        result, default=str, ensure_ascii=False
+                    )
                     return {
                         "status": "success",
                         "data": serialized_result,
