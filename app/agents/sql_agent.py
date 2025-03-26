@@ -12,7 +12,7 @@ class SQLAgent(BaseAgent):
     This agent follows the workflow:
     1. Get table name for the query
     2. Generate SQL
-    3. (Simulate) Execute SQL
+    3. Execute SQL
     4. Fix SQL if there are errors
     5. Return results
     """
@@ -90,17 +90,9 @@ based on natural language descriptions. You will analyze user requests and creat
 
     def _get_table_name(self, query: str) -> str:
         """Determine the appropriate table to use based on the query."""
-        prompt = f"""Based on the following table descriptions and user query, determine which table should be used:
-
-Table descriptions:
-{self.table_description}
-
-User query: {query}
-
-First, analyze what information the user is looking for.
-Then, determine which table contains the necessary fields to answer the query.
-Respond with just the table name, nothing else.
-"""
+        prompt = PROMPTS["GET_TABLE_NAME"].format(
+            table_description=self.table_description, query=query
+        )
 
         messages: List[Union[dict, Message]] = [Message.user(prompt)]
         response = self.llm.ask(messages=messages, stream=False)
@@ -116,22 +108,11 @@ Respond with just the table name, nothing else.
 
     def _generate_sql(self, query: str, table_name: str) -> str:
         """Generate SQL code based on the user query and identified table."""
-        prompt = f"""Generate SQL code for the following query using the {table_name} table:
-
-Table description:
-{self.table_description[table_name]}
-
-User query: {query}
-
-Requirements:
-1. Write a valid SQL query that addresses the user's request
-2. Consider performance optimization
-3. Include appropriate filtering, grouping, and ordering
-4. Format your response as valid SQL code only
-
-Return only the SQL code, no explanations.
-"""
-
+        prompt = PROMPTS["GENERATE_SQL"].format(
+            table_name=table_name,
+            table_description=self.table_description[table_name],
+            query=query,
+        )
         messages: List[Union[dict, Message]] = [Message.user(prompt)]
         response = self.llm.ask(messages=messages, stream=False, temperature=0.2)
 
@@ -162,16 +143,9 @@ Return only the SQL code, no explanations.
 
     def _fix_sql(self, sql_code: str, error_message: str) -> str:
         """Fix SQL code based on error messages."""
-        prompt = f"""The following SQL code generated an error:
-
-```sql
-{sql_code}
-```
-
-Error message: {error_message}
-
-Please fix the SQL code to resolve this error. Only return the corrected SQL code, no explanations.
-"""
+        prompt = PROMPTS["FIX_SQL"].format(
+            sql_code=sql_code, error_message=error_message
+        )
 
         messages: List[Union[dict, Message]] = [Message.user(prompt)]
         response = self.llm.ask(messages=messages, stream=False, temperature=0.2)

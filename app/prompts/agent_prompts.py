@@ -119,11 +119,43 @@ PROMPTS[
 
 Error message: {error_message}
 
-SQL query:
-{sql_query}
+```sql
+{sql_code}
+```
+
+Please fix the SQL code to resolve this error. Only return the corrected SQL code, no explanations.
+"""
+
+
+PROMPTS[
+    "GET_TABLE_NAME"
+] = """Based on the following table descriptions and user query, determine which table should be used:
+
+Table descriptions:
+{table_description}
+
+User query: {query}
+
+First, analyze what information the user is looking for.
+Then, determine which table contains the necessary fields to answer the query.
+Respond with just the table name, nothing else.
+"""
+
+
+PROMPTS[
+    "GENERATE_SQL"
+] = """Generate SQL code for the following query using the {table_name} table:
+
+Table description:
+{table_description}
+
+User query: {query}
 
 Requirements:
-1. Fix the SQL query to address the error
-2. Keep the SQL query valid
-3. Keep the SQL query concise
+1. Write a valid SQL query that addresses the user's request
+2. Consider performance optimization
+3. Include appropriate filtering, grouping, and ordering
+4. Format your response as valid SQL code only
+
+Return only the SQL code, no explanations.
 """
