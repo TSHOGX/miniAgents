@@ -4,6 +4,7 @@ from app.agents.base import BaseAgent
 from app.prompts.agent_prompts import PROMPTS
 from app.prompts.db_info import DB_INFO
 from app.schema import Message
+from app.tools.sql_debugger import fix_sql
 
 
 class SQLAgent(BaseAgent):
@@ -142,19 +143,4 @@ based on natural language descriptions. You will analyze user requests and creat
         return {"status": "success", "message": "[Simulated successful query results]"}
 
     def _fix_sql(self, sql_code: str, error_message: str) -> str:
-        """Fix SQL code based on error messages."""
-        prompt = PROMPTS["FIX_SQL"].format(
-            sql_code=sql_code, error_message=error_message
-        )
-
-        messages: List[Union[dict, Message]] = [Message.user(prompt)]
-        response = self.llm.ask(messages=messages, stream=False, temperature=0.2)
-
-        # Extract fixed SQL code from the response
-        fixed_sql = response.strip()
-        if fixed_sql.startswith("```sql"):
-            fixed_sql = fixed_sql.split("```sql")[1]
-        if fixed_sql.endswith("```"):
-            fixed_sql = fixed_sql.split("```")[0]
-
-        return fixed_sql.strip()
+        return fix_sql(sql_code, error_message, self.llm)

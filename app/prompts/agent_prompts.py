@@ -67,7 +67,7 @@ including table names and field descriptions. Please answer the user's question 
 
 PROMPTS[
     "GENERATE_SQL"
-] = """Generate a SQL query for the following question about financial transactions.
+] = """Generate a SQL query for the following question.
 
 Table schema:
 {table_schema}
@@ -80,10 +80,8 @@ User question: {user_query}
 Requirements:
 1. Write a valid SQL query that addresses the user's request
 2. Include appropriate filtering, grouping, and ordering based on the question
-3. Consider performance optimization
-4. Format your response as valid SQL code only (no explanations)
-5. Only use fields that exist in the schema
-6. The table name is "transactions"
+3. Only use fields that exist in the schema
+4. The table name is "{table_name}"
 
 Return only the SQL query, no explanations.
 """
@@ -139,23 +137,4 @@ User query: {query}
 First, analyze what information the user is looking for.
 Then, determine which table contains the necessary fields to answer the query.
 Respond with just the table name, nothing else.
-"""
-
-
-PROMPTS[
-    "GENERATE_SQL"
-] = """Generate SQL code for the following query using the {table_name} table:
-
-Table description:
-{table_description}
-
-User query: {query}
-
-Requirements:
-1. Write a valid SQL query that addresses the user's request
-2. Consider performance optimization
-3. Include appropriate filtering, grouping, and ordering
-4. Format your response as valid SQL code only
-
-Return only the SQL code, no explanations.
 """

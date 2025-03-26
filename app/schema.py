@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any, List, Literal, Optional, Union
 
+import pandas as pd
 from pydantic import BaseModel, Field
 
 
@@ -99,8 +100,11 @@ class Message(BaseModel):
 
 
 class Memory(BaseModel):
+    """memory storage for messages, sql files, df files, etc."""
+
     messages: List[Message] = Field(default_factory=list)
     max_messages: int = Field(default=100)
+    files: dict = Field(default_factory=dict)
 
     def add_message(self, message: Message) -> None:
         """Add a message to memory"""
@@ -124,3 +128,19 @@ class Memory(BaseModel):
     def to_dict_list(self) -> List[Union[dict, Message]]:
         """Convert messages to list of dicts"""
         return [msg.to_dict() for msg in self.messages]
+
+    def add_sql(self, sql: str) -> None:
+        """Add a SQL file to memory"""
+        self.files["sql"] = sql
+
+    def curr_sql(self) -> str:
+        """Get the current SQL file"""
+        return self.files["sql"]
+
+    def add_df(self, df: pd.DataFrame) -> None:
+        """Add a DataFrame to memory"""
+        self.files["df"] = df
+
+    def curr_df(self) -> pd.DataFrame:
+        """Get the current DataFrame"""
+        return self.files["df"]
