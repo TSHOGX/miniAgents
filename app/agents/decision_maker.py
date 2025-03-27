@@ -3,6 +3,8 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.agents.base import BaseAgent
+from app.agents.db_info_agent import DbInfoAgent
+from app.agents.supabase_transaction_agent import SupabaseTransactionAgent
 from app.schema import Message, Memory
 from app.prompts.agent_prompts import PROMPTS
 
@@ -113,13 +115,14 @@ Make decisions based on the nature of the request and the capabilities of availa
         response = ""
 
         if "get_sql" in assigned_worker:
-            # This would normally create and use the SQLGenerator agent
-            # For now, we'll simulate the response
-            response = f"""我把任务分配给了 SQL Generator, 他顺利的完成了任务."""
+            # Call the Supabase Transaction Agent
+            supabase_transaction_agent = SupabaseTransactionAgent()
+            response = supabase_transaction_agent.run(summarized_query)
 
         elif "get_db_info" in assigned_worker:
-            # This would normally create and use the GetDbInfo agent
-            response = f"""我把任务分配给了 DB Info Manager, 他顺利的完成了任务."""
+            # Call the db info agent
+            db_info_agent = DbInfoAgent()
+            response = db_info_agent.run(summarized_query)
 
         else:
             # Default to base chat for general queries
