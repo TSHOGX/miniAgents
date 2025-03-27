@@ -104,7 +104,10 @@ class Memory(BaseModel):
 
     messages: List[Message] = Field(default_factory=list)
     max_messages: int = Field(default=100)
-    files: dict = Field(default_factory=dict)
+    sql_codes: str = Field(default="")
+    df_data: pd.DataFrame = Field(default_factory=pd.DataFrame)
+
+    model_config = {"arbitrary_types_allowed": True}
 
     def add_message(self, message: Message) -> None:
         """Add a message to memory"""
@@ -131,16 +134,16 @@ class Memory(BaseModel):
 
     def add_sql(self, sql: str) -> None:
         """Add a SQL file to memory"""
-        self.files["sql"] = sql
+        self.sql_codes = sql
 
     def curr_sql(self) -> str:
         """Get the current SQL file"""
-        return self.files["sql"]
+        return self.sql_codes
 
     def add_df(self, df: pd.DataFrame) -> None:
         """Add a DataFrame to memory"""
-        self.files["df"] = df
+        self.df_data = df
 
     def curr_df(self) -> pd.DataFrame:
         """Get the current DataFrame"""
-        return self.files["df"]
+        return self.df_data
