@@ -72,8 +72,8 @@ PROMPTS[
 Table schema:
 {table_schema}
 
-Available ledger categories:
-{ledger_categories}
+Helper information:
+{helper_info}
 
 User question: {user_query}
 
@@ -82,6 +82,7 @@ Requirements:
 2. Include appropriate filtering, grouping, and ordering based on the question
 3. Only use fields that exist in the schema
 4. The table name is "{table_name}"
+5. The table is from Supabase database
 
 Return only the SQL query, no explanations.
 """
@@ -89,24 +90,19 @@ Return only the SQL query, no explanations.
 
 PROMPTS[
     "ANALYZE_SQL"
-] = """Based on the following transaction data and the user's question, provide an informative response.
+] = """Based on the following query results and the user's question, provide an informative response.
 
 User question: {user_query}
 
-SQL query executed:
-```sql
-{sql_query}
-```
-
-Query results:
+Query results(first 5 rows):
 {formatted_data}
 
 Please provide:
 1. A direct answer to the user's question
 2. Any relevant insights from the data
-3. Make the response conversational and helpful
-4. Format currency values appropriately with ¥ symbol
-5. Keep your response concise and focused on the data
+3. Any visualization suggestions based on the data
+4. Focus on 
+4. Keep your response concise and focused on the data
 
 Response:"""
 
@@ -130,7 +126,7 @@ PROMPTS[
 ] = """Based on the following table descriptions and user query, determine which table should be used:
 
 Table descriptions:
-{table_description}
+{db_info}
 
 User query: {query}
 

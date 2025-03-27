@@ -51,18 +51,27 @@ class DatabaseTool:
                         "status": "success",
                         "data": df,
                         "query": sql_query,
+                        "message": "SELECT query executed successfully",
                     }
                 except psycopg2.ProgrammingError:
                     # This happens for non-SELECT queries (INSERT, UPDATE, etc.)
                     # so we don't need to commit the transaction
+                    self.pg_connection.rollback()
                     return {
                         "status": "error",
-                        "message": "[non-SELECT queries (INSERT, UPDATE, etc.)]",
+                        "data": pd.DataFrame([]),
+                        "query": sql_query,
+                        "message": "non-SELECT queries (INSERT, UPDATE, etc.)",
                     }
         except Exception as e:
             # Ensure any transaction is rolled back on error
             self.pg_connection.rollback()
-            return {"status": "error", "message": str(e)}
+            return {
+                "status": "error",
+                "data": pd.DataFrame([]),
+                "query": sql_query,
+                "message": str(e),
+            }
 
     def test_connection(self) -> str:
         """Test the database connection and return status information."""

@@ -4,7 +4,7 @@ from pydantic import Field
 
 from app.agents.base import BaseAgent
 from app.agents.db_info_agent import DbInfoAgent
-from app.agents.supabase_transaction_agent import SupabaseTransactionAgent
+from app.agents.sql_agent import SQLAgent
 from app.schema import Message, Memory
 from app.prompts.agent_prompts import PROMPTS
 
@@ -115,9 +115,9 @@ Make decisions based on the nature of the request and the capabilities of availa
         response = ""
 
         if "get_sql" in assigned_worker:
-            # Call the Supabase Transaction Agent
-            supabase_transaction_agent = SupabaseTransactionAgent()
-            response = supabase_transaction_agent.run(summarized_query)
+            # Call the SQL Agent
+            sql_agent = SQLAgent()
+            response = sql_agent.run(summarized_query)
 
         elif "get_db_info" in assigned_worker:
             # Call the db info agent

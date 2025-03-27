@@ -18,7 +18,7 @@ including table names and field descriptions. Please answer user questions about
     next_step_prompt: str = ""
 
     # Table description containing database schema information
-    table_description: str = str(DB_INFO["TABLE_DESCRIPTION"])
+    table_description: str = str(DB_INFO["DB_INFO"])
 
     def step(self) -> str:
         """Execute a single step to answer database questions."""
