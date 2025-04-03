@@ -7,7 +7,7 @@ from app.prompts.agent_prompts import PROMPTS
 from app.prompts.db_info import DB_INFO
 from app.schema import Message
 from app.tools.database import db_tool
-from app.tools.sql_debugger import fix_sql
+from app.tools.sql_toolbox import fix_sql, extract_sql_from_llm_response
 
 
 class SQLAgent(BaseAgent):
@@ -111,14 +111,10 @@ class SQLAgent(BaseAgent):
         messages: List[Union[dict, Message]] = [Message.user(prompt)]
         response = self.llm.ask(messages=messages, stream=False, temperature=0.2)
 
-        # Extract SQL code from the response, removing any markdown formatting
-        sql_code = response.strip()
-        if sql_code.startswith("```sql"):
-            sql_code = sql_code.split("```sql")[1]
-        if sql_code.endswith("```"):
-            sql_code = sql_code.split("```")[0]
+        # Extract SQL code from the response
+        sql_code = extract_sql_from_llm_response(response, no_semicolon=True)
 
-        return sql_code.strip()
+        return sql_code
 
     def _format_response(self, user_query: str, query_result: Dict[str, Any]) -> str:
         """Format query results into a human-readable response."""

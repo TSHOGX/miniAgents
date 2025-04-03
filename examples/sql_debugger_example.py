@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.config import LLMSettings
 from app.llm import LLM
 from app.schema import Message
-from app.tools.sql_debugger import fix_sql, get_sql_debugger_tool
+from app.tools.sql_toolbox import fix_sql, get_sql_debugger_tool
 
 
 def main():

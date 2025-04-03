@@ -1,9 +1,27 @@
 from typing import Dict, Any, List, Union
 import json
+import re
 
 from app.prompts.agent_prompts import PROMPTS
 from app.schema import Message
 from app.llm import LLM
+
+
+def extract_sql_from_llm_response(llm_response: str, no_semicolon: bool = False) -> str:
+    """
+    Extract SQL from LLM response in markdown format
+    """
+    sql = llm_response
+    pattern = r"```sql(.*?)```"
+    sql_code_snippets = re.findall(pattern, llm_response, re.DOTALL)
+
+    if len(sql_code_snippets) > 0:
+        sql = sql_code_snippets[-1].strip()
+
+    if no_semicolon:
+        sql = sql.rstrip(";")
+
+    return sql.strip()
 
 
 def fix_sql(sql_code: str, error_message: str, llm: LLM) -> str:
@@ -31,14 +49,10 @@ def fix_sql(sql_code: str, error_message: str, llm: LLM) -> str:
     response = llm.ask(messages=messages, stream=False, temperature=0.2)
     print(response)
 
-    # Extract SQL code from the response, removing any markdown formatting
-    fixed_sql = response.strip()
-    if fixed_sql.startswith("```sql"):
-        fixed_sql = fixed_sql.split("```sql")[1]
-    if fixed_sql.endswith("```"):
-        fixed_sql = fixed_sql.split("```")[0]
+    # Extract SQL code from the response
+    fixed_sql = extract_sql_from_llm_response(response)
 
-    return fixed_sql.strip()
+    return fixed_sql
 
 
 def get_sql_debugger_tool() -> Dict[str, Any]:
