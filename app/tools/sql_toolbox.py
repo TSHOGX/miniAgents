@@ -24,7 +24,7 @@ def extract_sql_from_llm_response(llm_response: str, no_semicolon: bool = False)
     return sql.strip()
 
 
-def fix_sql(sql_code: str, error_message: str, llm: LLM) -> str:
+def fix_sql(sql_code: str, table_schema: str, error_message: str, llm: LLM) -> str:
     """
     Fix SQL code based on error message.
 
@@ -39,6 +39,7 @@ def fix_sql(sql_code: str, error_message: str, llm: LLM) -> str:
     # Use the existing FIX_SQL prompt from agent_prompts.py
     prompt = PROMPTS["FIX_SQL"].format(
         sql_code=sql_code,
+        table_schema=table_schema,
         error_message=error_message,
     )
 

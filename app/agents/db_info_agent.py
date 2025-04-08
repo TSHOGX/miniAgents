@@ -1,5 +1,6 @@
 from typing import Optional, Dict, Any, List, Union, cast
 
+from app.logger import logger
 from app.agents.base import BaseAgent
 from app.prompts.agent_prompts import PROMPTS
 from app.prompts.db_info import DB_INFO
@@ -26,11 +27,16 @@ including table names and field descriptions. Please answer user questions about
         last_message = self.memory.get_recent_messages(1)[-1]
         if last_message.role != "user":
             return "No user query found. Please ask a question about the database."
-        last_user_query = last_message.content
+        # last_user_query = last_message.content
+
+        # Get all user queries
+        user_queries = self.memory.get_query_list()
+        user_queries = "- " + "\n- ".join(user_queries)
+        logger.info(f"User queries: \n{user_queries}")
 
         # Format the query with table information
         formatted_query = PROMPTS["GET_DB_INFO"].format(
-            table_description=self.table_description, last_user_query=last_user_query
+            table_description=self.table_description, user_queries=user_queries
         )
 
         # Generate a response using the LLM
@@ -39,6 +45,7 @@ including table names and field descriptions. Please answer user questions about
             temperature=0.7,
             stream=False,
         )
+        logger.info(f"Response: \n{response}")
 
         # Store the response in memory
         self.update_memory("assistant", response)

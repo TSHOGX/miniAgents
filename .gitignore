@@ -10,5 +10,6 @@ __pycache__
 logs
 config
 
+files
 users
 *copy.py

@@ -49,25 +49,25 @@ Worker: """
 PROMPTS[
     "GET_DB_INFO"
 ] = """**You are a professional data scientist and analyst. I will provide you with database information, 
-including table names and field descriptions. Please answer the user's question about this database.**
+including table names and field descriptions. Please answer the user's questions about this database.**
 
 ## Database Information
 
 {table_description}
 
-## User Question
+## User Questions
 
-{last_user_query}
+{user_queries}
 
 ## Output Requirements
-1. Understand the user's question. For complex questions, extract the key points first.
+1. Understand the user's questions, they may be a series of instructions. For complex questions, extract the key points first.
 2. Understand the database structure, select appropriate tables, and based on the field descriptions, answer the user's question.
 """
 
 
 PROMPTS[
     "GENERATE_SQL"
-] = """Generate a SQL query for the following question.
+] = """Generate a SQL query based on the following infomations. User may give multiple instructions, you need to generate a SQL query that addresses all user's requests.
 
 Table schema:
 {table_schema}
@@ -75,14 +75,15 @@ Table schema:
 Helper information:
 {helper_info}
 
-User question: {user_query}
+User requests: 
+{user_query}
 
 Requirements:
-1. Write a valid SQL query that addresses the user's request
+1. Write a valid SQL query that addresses all user's instructions
 2. Include appropriate filtering, grouping, and ordering based on the question
 3. Only use fields that exist in the schema
-4. The table name is "{table_name}"
-5. The table is from Supabase database
+4. If have multiple time columns, make sure they are merged into a single column (e.g. year, month, day) and appears in the first column of the result
+5. The table is from Supabase database and the table name is "{table_name}"
 
 Return only the SQL query, no explanations.
 """
@@ -90,19 +91,27 @@ Return only the SQL query, no explanations.
 
 PROMPTS[
     "ANALYZE_SQL"
-] = """Based on the following query results and the user's question, provide an informative response.
+] = """Based on the following query results and the user's questions, provide an informative response.
 
-User question: {user_query}
+User questions:
+{user_query}
 
 Query results(first 5 rows):
 {formatted_data}
 
 Please provide:
-1. A direct answer to the user's question
+1. A direct answer to the user's questions
 2. Any relevant insights from the data
-3. Any visualization suggestions based on the data
-4. Focus on 
+3. Provide visualization suggestions based on the data
 4. Keep your response concise and focused on the data
+
+Consider what visualization would best represent the data. Some guidelines:
+- Bar charts: Good for comparing quantities across categories
+- Line charts: Ideal for showing trends over time or continuous variables
+- Pie charts: Effective for showing proportions or percentages of a whole
+- Scatter plots: Good for showing relationships between two numeric variables
+- Heatmaps: Useful for showing complex data relationships or color-coding values
+- Box plots: Helpful for comparing distributions or identifying outliers
 
 Response:"""
 
@@ -112,6 +121,9 @@ PROMPTS[
 ] = """Based on the following error message, fix the SQL query.
 
 Error message: {error_message}
+
+Table schema:
+{table_schema}
 
 ```sql
 {sql_code}

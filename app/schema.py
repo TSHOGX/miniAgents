@@ -1,5 +1,8 @@
+import datetime
+import uuid
 from enum import Enum
 from typing import Any, List, Literal, Optional, Union
+import os
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -102,6 +105,12 @@ class Message(BaseModel):
 class Memory(BaseModel):
     """memory storage for messages, sql files, df files, etc."""
 
+    unique_id: str = Field(
+        default=str(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+        + "_"
+        + str(uuid.uuid4())
+    )
+
     messages: List[Message] = Field(default_factory=list)
     max_messages: int = Field(default=100)
     sql_codes: str = Field(default="")
@@ -118,11 +127,16 @@ class Memory(BaseModel):
 
     def add_messages(self, messages: List[Message]) -> None:
         """Add multiple messages to memory"""
+        # Change elements of messages to Message
+        messages = [Message(**msg) for msg in messages]
+
         self.messages.extend(messages)
 
     def clear(self) -> None:
         """Clear all messages"""
         self.messages.clear()
+        self.sql_codes = ""
+        self.df_data = pd.DataFrame()
 
     def get_recent_messages(self, n: int) -> List[Message]:
         """Get n most recent messages"""
@@ -132,17 +146,33 @@ class Memory(BaseModel):
         """Convert messages to list of dicts"""
         return [msg.to_dict() for msg in self.messages]
 
+    def get_query_list(self) -> List[str]:
+        """List of user queries"""
+        return [
+            msg.content
+            for msg in self.messages
+            if msg.role == "user" and msg.content is not None
+        ]
+
     def add_sql(self, sql: str) -> None:
-        """Add a SQL file to memory"""
+        """Add a SQL file to memory and save it to a file"""
         self.sql_codes = sql
+        # 确保文件目录存在
+        os.makedirs("files", exist_ok=True)
+        with open(f"files/{self.unique_id}_sql.sql", "w") as f:
+            f.write(sql)
 
     def curr_sql(self) -> str:
         """Get the current SQL file"""
         return self.sql_codes
 
     def add_df(self, df: pd.DataFrame) -> None:
-        """Add a DataFrame to memory"""
+        """Add a DataFrame to memory and save it to a file"""
         self.df_data = df
+        # 确保文件目录存在
+        os.makedirs("files", exist_ok=True)
+        with open(f"files/{self.unique_id}_df.csv", "w") as f:
+            df.to_csv(f, index=False)
 
     def curr_df(self) -> pd.DataFrame:
         """Get the current DataFrame"""
